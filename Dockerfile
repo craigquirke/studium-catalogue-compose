@@ -1,4 +1,4 @@
-FROM node:20-alpine AS cloner
+FROM node:22-alpine AS cloner
 
 # Install git
 RUN apk add --no-cache git
@@ -12,9 +12,12 @@ ARG GITHUB_REPO
 RUN git clone https://oauth2:${GITHUB_TOKEN}@${GITHUB_REPO} /app
 
 # Final runner stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
+
+# Install build dependencies for better-sqlite3 (node-gyp)
+RUN apk add --no-cache python3 make g++ sqlite-dev
 
 # Copy the cloned repository from the cloner stage
 # This ensures the GITHUB_TOKEN used in the previous stage isn't included in the final image layers
