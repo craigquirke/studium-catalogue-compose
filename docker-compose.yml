@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  studium-app:
+    build:
+      context: .
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+        GITHUB_REPO: ${GITHUB_REPO}
+    container_name: studium-catalogue
+    # Auto service restart on server failures
+    restart: unless-stopped
+    ports:
+      # Optional port expose in addition to cloudflared (mapped if PORT is defined in .env)
+      - "${PORT:-3000}:3000"
+    volumes:
+      # Map the local data folder to the container's data directory
+      - ${DATA_DIR:-/opt/studium-catalogue}:/app/data
+    environment:
+      - NODE_ENV=production
+    # Healthcheck for reliability
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - cloudflare_network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: studium-cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - cloudflare_network
+    depends_on:
+      studium-app:
+        condition: service_healthy
+
+networks:
+  cloudflare_network:
+    driver: bridge
