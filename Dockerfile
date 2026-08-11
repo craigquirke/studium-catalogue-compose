@@ -29,8 +29,9 @@ RUN npm ci
 # Build the Next.js app
 RUN npm run build
 
-# Ensure the data directory exists and has correct permissions
-RUN mkdir -p /app/data && chown -R node:node /app/data
+# Ensure the data and Next.js cache directories exist with correct permissions
+RUN mkdir -p /app/data /app/.next/cache/images /app/.next/cache/fetch-cache \
+    && chown -R node:node /app
 
 # Use a non-root user for better security
 USER node
